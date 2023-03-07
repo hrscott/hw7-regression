@@ -21,15 +21,6 @@ class BaseRegressor():
         self.loss_hist_train = []
         self.loss_hist_val = []
     
-    def make_prediction(self, X):
-        raise NotImplementedError
-    
-    def loss_function(self, y_true, y_pred):
-        raise NotImplementedError
-        
-    def calculate_gradient(self, y_true, X):
-        raise NotImplementedError
-    
     def train_model(self, X_train, y_train, X_val, y_val):
 
         # Padding data with vector of ones for bias term
@@ -116,10 +107,12 @@ class LogisticRegressor(BaseRegressor):
             max_iter=max_iter,
             batch_size=batch_size
         )
+        # Add 1 to the number of features for the bias term
+        self.W = np.random.randn(num_feats + 1)
     
     def make_prediction(self, X) -> np.array:
         """
-        TODO: Implement logistic function to get estimates (y_pred) for input X values. The logistic
+        Implement logistic function to get estimates (y_pred) for input X values. The logistic
         function is a transformation of the linear model into an "S-shaped" curve that can be used
         for binary classification.
 
@@ -129,8 +122,19 @@ class LogisticRegressor(BaseRegressor):
         Returns: 
             The predicted labels (y_pred) for given X.
         """
-        pass
-    
+
+        # Add bias column of ones to X
+        #X = np.hstack([X, np.ones((X.shape[0], 1))])
+        
+        
+        #Calculate the dot product of the input features X and the model weights W to get a linear combination of the features.
+        linear = np.dot(X, self.W)
+        #Apply the logistic function to the linear combination to get a probability between 0 and 1
+        y_pred = 1 / (1 + np.exp(-linear))
+        #Return the predicted probabilities for the input features.
+        return y_pred
+
+
     def loss_function(self, y_true, y_pred) -> float:
         """
         TODO: Implement binary cross entropy loss, which assumes that the true labels are either
@@ -143,18 +147,41 @@ class LogisticRegressor(BaseRegressor):
         Returns: 
             The mean loss (a single number).
         """
-        pass
-        
+        epsilon = 1e-5 # avoid division by zero
+        # Calculate binary cross-entropy loss
+        loss = - np.mean(y_true * np.log(y_pred + epsilon) + (1 - y_true) * np.log(1 - y_pred + epsilon))
+        regularization = 0.01 * np.sum(self.W**2)  # L2 regularization term
+        loss += regularization
+        return loss
+    
+
     def calculate_gradient(self, y_true, X) -> np.ndarray:
         """
-        TODO: Calculate the gradient of the loss function with respect to the given data. This
-        will be used to update the weights during training.
+        Calculates the gradient of the binary cross-entropy loss function with respect to the weights.
 
         Arguments:
             y_true (np.array): True labels.
             X (np.ndarray): Matrix of feature values.
 
-        Returns: 
+        Returns:
             Vector of gradients.
         """
-        pass
+        # Make prediction
+        y_pred = self.make_prediction(X)
+        # Calculate error (difference between true and predicted labels)
+        error = y_true - y_pred
+        # Calculate gradient using the dot product of X and error, and taking the mean of each column
+        gradient = -np.mean(np.multiply(X.T, error).T, axis=0)
+
+        return gradient
+    
+    def plot_data(self, X, y):
+        """
+        Plots the input data with the binary labels.
+        """
+        fig, ax = plt.subplots()
+        ax.scatter(X[:, 0], X[:, 1], c=y)
+        ax.set_xlabel("Feature 1")
+        ax.set_ylabel("Feature 2")
+        ax.set_title("Input Data")
+        plt.show()
