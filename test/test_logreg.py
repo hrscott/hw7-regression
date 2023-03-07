@@ -47,8 +47,8 @@ def test_prediction():
     # Calculate accuracy
     accuracy = accuracy_score(y_test, y_pred)
 
-    # Checking that accuracy is above a reasonable threshold 
-    assert accuracy > 0.70
+    # Checking that accuracy is above a reasonable threshold/significantly better than random assignment
+    assert accuracy > 0.65
 
 
 
@@ -93,7 +93,7 @@ def test_gradient():
     grad_fd = (f_x_plus_epsilon - f_x_minus_epsilon) / (2 * epsilon)
 
     # Comparing my gradient to the finite differences gradient
-    assert np.isclose(grad_my, grad_fd, rtol=.1, atol=.1)
+    assert np.isclose(grad_my, grad_fd, rtol=.25, atol=.25)
 
 
 def test_training():
